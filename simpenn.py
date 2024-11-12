@@ -5,7 +5,9 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-
+import torch.optim as optim
+import numpy as np 
+from sklearn.metrics import accuracy_score, classification_report
 # Load dataset
 data = load_breast_cancer()
 X = data.data
@@ -41,45 +43,46 @@ class SimpleNN(nn.Module):
         x = self.relu(self.fc2(x))
         x = self.sigmoid(self.fc3(x))
         return x
-import torch.optim as optim
 
 num_epochs = 20
+# Initialize three models
 models = [SimpleNN() for _ in range(3)]  # Create an ensemble of 3 models
 
+# Train each model separately
 for model in models:
-    criterion = nn.BCELoss()  # Binary Cross-Entropy Loss for binary classification
+    criterion = nn.BCELoss()  # Binary Cross-Entropy Loss
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     for epoch in range(num_epochs):
+        model.train()  # Set model to training mode
         for X_batch, y_batch in train_loader:
             # Forward pass
             outputs = model(X_batch).squeeze()
             loss = criterion(outputs, y_batch)
-            
+
             # Backward pass and optimization
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-import numpy as np
-
+# Collect predictions from each model in the ensemble
 model_predictions = []
-
 with torch.no_grad():
     for model in models:
+        model.eval()  # Set model to evaluation mode
         predictions = []
         for X_batch, _ in test_loader:
             outputs = model(X_batch).squeeze()
             predictions.append(outputs.round().numpy())  # Binary predictions
         model_predictions.append(np.concatenate(predictions, axis=0))
 
-# Convert list of predictions to an array of shape (num_models, num_samples)
+# Convert list of predictions to array shape (num_models, num_samples)
 model_predictions = np.array(model_predictions)
 
+# Ensemble by averaging predictions and rounding
 ensemble_predictions = np.round(np.mean(model_predictions, axis=0))
 
-from sklearn.metrics import accuracy_score, classification_report
-
+# Evaluate ensemble model performance
 accuracy = accuracy_score(y_test, ensemble_predictions)
 report = classification_report(y_test, ensemble_predictions)
 print("Ensemble Model Accuracy:", accuracy)
