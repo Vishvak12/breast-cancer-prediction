@@ -1,8 +1,6 @@
 import kagglehub
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 import torch
-from datasets import load_dataset
-from torch.utils.data import DataLoader
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 from dataset import get_data_loaders  # Custom loader module
@@ -42,3 +40,24 @@ y_test = np.array(y_test)
 
 print("Ensemble Model Accuracy:", accuracy_score(y_test, ensemble_predictions))
 print(classification_report(y_test, ensemble_predictions))
+from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
+
+# Step 5: Calculate and report metrics
+y_test = [label for _, label in test_loader.dataset.samples]
+y_test = np.array(y_test)
+
+# Accuracy
+accuracy = accuracy_score(y_test, ensemble_predictions)
+
+# Classification report includes precision, recall, F1, and support
+report = classification_report(y_test, ensemble_predictions, target_names=['Class 0', 'Class 1'])
+precision = precision_score(y_test, ensemble_predictions, average='binary')
+recall = recall_score(y_test, ensemble_predictions, average='binary')
+f1 = f1_score(y_test, ensemble_predictions, average='binary')
+
+# Print out metrics
+print("Ensemble Model Accuracy:", accuracy)
+print("Ensemble Model Precision:", precision)
+print("Ensemble Model Recall:", recall)
+print("Ensemble Model F1 Score:", f1)
+print("Detailed Classification Report:\n", report)
